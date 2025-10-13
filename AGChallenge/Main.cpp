@@ -10,7 +10,8 @@ using namespace TimeCounters;
 
 using namespace std;
 
-#define dMAX_TIME 20*60
+// Default time limit in seconds (can be overridden via CLI)
+static double g_time_limit_sec = 20 * 60;
 
 
 void vRunExperiment(CEvaluator &cConfiguredEvaluator)
@@ -29,13 +30,20 @@ void vRunExperiment(CEvaluator &cConfiguredEvaluator)
 
 		c_time_counter.bGetTimePassed(&d_time_passed);
 
-		while (d_time_passed <= dMAX_TIME)
+		while (d_time_passed <= g_time_limit_sec)
 		{
 			c_optimizer.vRunIteration();
 			c_optimizer.pvGetCurrentBest();
 
 			c_time_counter.bGetTimePassed(&d_time_passed);
 		}//while (d_time_passed <= MAX_TIME)
+
+		// Print final best fitness for quick comparisons
+		if (auto pv_best = c_optimizer.pvGetCurrentBest())
+		{
+			double d_best = cConfiguredEvaluator.dEvaluate(*pv_best);
+			cout << "fitness: " << d_best << endl;
+		}
 
 	}//try
 	catch (exception &c_exception)
@@ -104,26 +112,56 @@ void vRunRastriginExperiment(int iNumberOfBits, int iBitsPerFloat, int iMaskSeed
 	}//if (c_rastrigin.bConfigure(iNumberOfBits, iBitsPerFloat, iMaskSeed) == true)
 }//void vRunRastriginExperiment(int iNumberOfBits, int iBitsPerFloat, int iMaskSeed)
 
-void main(int iArgCount, char **ppcArgValues)
+int main(int iArgCount, char **ppcArgValues)
 {
 	random_device c_mask_seed_generator;
 	int i_mask_seed = (int)c_mask_seed_generator();
 
-	vRunIsingSpinGlassExperiment(81, 0, i_mask_seed);
-	vRunIsingSpinGlassExperiment(81, 0, iSEED_NO_MASK);
+	// Quick-run CLI
+	bool quick = false;
+	for (int i = 1; i < iArgCount; ++i)
+	{
+		string arg = ppcArgValues[i];
+		if (arg == "--quick")
+		{
+			quick = true;
+		}
+		else if (arg == "--quick-seconds" && i + 1 < iArgCount)
+		{
+			try { g_time_limit_sec = stod(ppcArgValues[++i]); }
+			catch (...) { /* ignore parse errors, keep default */ }
+		}
+	}
 
-	vRunLeadingOnesExperiment(50, i_mask_seed);
-	vRunLeadingOnesExperiment(50, iSEED_NO_MASK);
+#ifdef DEFAULT_QUICK_RUN
+	quick = true;
+#endif
 
-	vRunMaxSatExperiment(25, 0, 4.27f, i_mask_seed);
-	vRunMaxSatExperiment(25, 0, 4.27f, iSEED_NO_MASK);
+	if (quick)
+	{
+		if (g_time_limit_sec == 20 * 60) g_time_limit_sec = 10; // default quick time
+		// Single, fast experiment for quick iteration:
+		vRunNearestNeighborNKExperiment(100, 0, 4, iSEED_NO_MASK);
+	}
+	else
+	{
+		vRunIsingSpinGlassExperiment(81, 0, i_mask_seed);
+		vRunIsingSpinGlassExperiment(81, 0, iSEED_NO_MASK);
 
-	vRunNearestNeighborNKExperiment(100, 0, 4, i_mask_seed);
-	vRunNearestNeighborNKExperiment(100, 0, 4, iSEED_NO_MASK);
+		vRunLeadingOnesExperiment(50, i_mask_seed);
+		vRunLeadingOnesExperiment(50, iSEED_NO_MASK);
 
-	vRunOneMaxExperiment(100, i_mask_seed);
-	vRunOneMaxExperiment(100, iSEED_NO_MASK);
+		vRunMaxSatExperiment(25, 0, 4.27f, i_mask_seed);
+		vRunMaxSatExperiment(25, 0, 4.27f, iSEED_NO_MASK);
 
-	vRunRastriginExperiment(200, 10, i_mask_seed);
-	vRunRastriginExperiment(200, 10, iSEED_NO_MASK);
-}//void main(int iArgCount, char **ppcArgValues)
+		vRunNearestNeighborNKExperiment(100, 0, 4, i_mask_seed);
+		vRunNearestNeighborNKExperiment(100, 0, 4, iSEED_NO_MASK);
+
+		vRunOneMaxExperiment(100, i_mask_seed);
+		vRunOneMaxExperiment(100, iSEED_NO_MASK);
+
+		vRunRastriginExperiment(200, 10, i_mask_seed);
+		vRunRastriginExperiment(200, 10, iSEED_NO_MASK);
+	}
+	return 0;
+}//int main(int iArgCount, char **ppcArgValues)

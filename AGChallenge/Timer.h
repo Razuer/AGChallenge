@@ -1,33 +1,28 @@
 #pragma once
-#include  "atlstr.h"  //CString
-#include  <math.h>
-#include  <time.h>
+#include <cmath>
+#include <ctime>
+#include <chrono>
 
-#include <windows.h>
-
-
-
-namespace  TimeCounters
+namespace TimeCounters
 {
-	class  CTimeCounter
+	class CTimeCounter
 	{
 	public:
-
 		CTimeCounter();
-		~CTimeCounter()  {};
+		~CTimeCounter() = default;
 
-		void  vSetStartNow();
-		bool  bGetTimePassed(double  *pdTimePassedSec);//if returned value is false it means the timer was not set on start
-		bool  bSetFinishOn(double  dTimeToFinishSec);
-		bool  bIsFinished();
+		// Start the timer now
+		void vSetStartNow();
+		// If returned value is false it means the timer was not set on start
+		bool bGetTimePassed(double *pdTimePassedSec);
+		bool bSetFinishOn(double dTimeToFinishSec);
+		bool bIsFinished();
 
 	private:
-		bool  b_start_inited;
-		LARGE_INTEGER  li_start_position;
-		LARGE_INTEGER  li_freq;
-		
-		bool  b_finish_inited;
-		LARGE_INTEGER  li_finish_position;
-
-	};//class  CTimeCounter
-};//namespace  TimeCounters
+		using clock = std::chrono::steady_clock;
+		bool b_start_inited;
+		bool b_finish_inited;
+		clock::time_point t_start;
+		clock::time_point t_finish;
+	};
+} // namespace TimeCounters

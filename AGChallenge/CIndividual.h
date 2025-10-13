@@ -1,5 +1,6 @@
 #pragma once
 #include <random>
+#include <vector>
 
 #define BASIC_GEN_SIZE 5
 #define iBIT_FALSE 0
@@ -39,5 +40,6 @@ public:
 	void twoPointCrossover(CIndividual& other);
 
 	// Getters
-	vector<int> getGenotype() { return m_genotype; }
+	const vector<int>& getGenotype() const { return m_genotype; }
+	vector<int>& getGenotype() { return m_genotype; }
 };

@@ -2,7 +2,6 @@
 
 #include <cfloat>
 #include <iostream>
-#include <windows.h>
 
 using namespace std;
 
@@ -135,7 +134,7 @@ void COptimizer::findBestIndividual()
 	{
 		CIndividual* current = m_population->getValueAt(i);
 		if (!current->isUpdated()) {
-			current->setFitness(c_evaluator.dEvaluate(&current->getGenotype()));
+			current->setFitness(c_evaluator.dEvaluate(current->getGenotype()));
 			current->setUpdated(true);
 		}
 		if (current->getFitness() > d_current_best_fitness) {
@@ -153,7 +152,7 @@ bool COptimizer::b_findBestIndividual()
 	{
 		CIndividual* current = m_population->getValueAt(i);
 		if (!current->isUpdated()) {
-			current->setFitness(c_evaluator.dEvaluate(&current->getGenotype()));
+			current->setFitness(c_evaluator.dEvaluate(current->getGenotype()));
 			current->setUpdated(true);
 		}
 		if (current->getFitness() > d_current_best_fitness) {
