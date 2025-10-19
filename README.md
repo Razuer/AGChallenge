@@ -132,7 +132,7 @@ instances_01_KP/large_scale/knapPI_2_200_1000_1,instances_01_KP/large_scale-opti
 
 Notes:
 - Required columns: `pop,pc,pm,seconds`. Optional: `runs` (default: 1), `seed` (default: random), `evals` (evaluation budget; default: disabled).
-- If you do not pass `--csv`, results will be written to `<your_batch_file>.csv` (a header will be added if the file is new/empty).
+- If you do not pass `--csv`, results will be written next to the batch file as `<batch_stem>_results.csv`. This default results file is overwritten (truncated) at the start of each batch run and the header is always written. If you pass `--csv <path>`, results are appended to that path (header is written only if the file was empty).
 - Each configuration is executed `runs` times; each output row contains: `run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed`.
 
 Example batch run:

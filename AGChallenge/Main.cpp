@@ -304,6 +304,7 @@ int main(int iArgCount, char **ppcArgValues)
 		}
 
 		// Prepare CSV output
+		bool derived_default_csv = false;
 		if (g_csv_path.empty())
 		{
 			// derive output path from batch path: <stem>_results.csv in the same directory
@@ -311,19 +312,27 @@ int main(int iArgCount, char **ppcArgValues)
 			std::string stem = bp.stem().string();
 			std::filesystem::path out = bp.parent_path() / (stem + std::string("_results.csv"));
 			g_csv_path = out.string();
+			derived_default_csv = true; // when auto-generating _results.csv, overwrite on new run
 		}
-		bool write_header = true;
+
+		// Open header with truncation if we auto-derived the default file, otherwise append
 		{
-			std::error_code ec;
-			if (std::filesystem::exists(g_csv_path, ec))
+			std::ofstream csv(g_csv_path, derived_default_csv ? (ios::out | ios::trunc) : (ios::out | ios::app));
+			if (csv)
 			{
-				auto sz = std::filesystem::file_size(g_csv_path, ec);
-				write_header = (ec ? true : (sz == 0));
-			}
-			std::ofstream csv(g_csv_path, ios::app);
-			if (csv && write_header)
-			{
-				csv << "run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed" << '\n';
+				// If truncating, the file is empty so we always (re)write the header.
+				// If appending to a user-provided path, write header only if the file was empty.
+				bool should_write_header = true;
+				if (!derived_default_csv)
+				{
+					std::error_code ec;
+					auto sz = std::filesystem::file_size(g_csv_path, ec);
+					should_write_header = (ec ? true : (sz == 0));
+				}
+				if (should_write_header)
+				{
+					csv << "run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed" << '\n';
+				}
 			}
 		}
 
