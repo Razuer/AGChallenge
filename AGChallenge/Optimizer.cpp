@@ -12,6 +12,8 @@ COptimizer::COptimizer(CEvaluator &cEvaluator)
 	c_rand_engine.seed(c_seed_generator());
 
 	d_current_best_fitness = 0;
+    ll_generation_count = 0;
+    ll_evaluation_count = 0;
 }//COptimizer::COptimizer(CEvaluator &cEvaluator)
 
 
@@ -19,12 +21,14 @@ void COptimizer::vInitialize()
 {
 	d_current_best_fitness = -DBL_MAX;
 	v_current_best.clear();
+    ll_generation_count = 0;
+    ll_evaluation_count = 0;
 
 
 	// ------ Properties of Genetical Algorithm ------
-	i_populationSize = 2000;
-	d_crossoverProbability = 0.8;
-	d_mutationProbability = 0.2;
+	if (i_populationSize <= 0) i_populationSize = 2000;
+	if (d_crossoverProbability <= 0) d_crossoverProbability = 0.8;
+	if (d_mutationProbability <= 0) d_mutationProbability = 0.2;
 	// -----------------------------------------------
 
 
@@ -50,15 +54,11 @@ void COptimizer::vRunIteration()
 		CIndividual* second = tournamentSelection();
 
 		if (getRandomNumber(0.0, 1.0) < d_crossoverProbability) {
-			first->twoPointCrossover(*second);
+			first->crossover(*second); // one-point crossover
 		}
 
-		if (getRandomNumber(0.0, 1.0) < d_mutationProbability) {
-			first->swapMutation();
-		}
-		if (getRandomNumber(0.0, 1.0) < d_mutationProbability) {
-			second->swapMutation();
-		}
+		first->tryMutate(d_mutationProbability);   // bit-flip mutation
+		second->tryMutate(d_mutationProbability);
 
 		// Add two individuals to new population
 		newPopulation->vSetValueAt(j * 2, first);
@@ -71,11 +71,9 @@ void COptimizer::vRunIteration()
 		CIndividual* second = tournamentSelection();
 
 		if (getRandomNumber(0.0, 1.0) < d_crossoverProbability) {
-			first->twoPointCrossover(*second);
+			first->crossover(*second);
 		}
-		if (getRandomNumber(0.0, 1.0) < d_mutationProbability) {
-			first->swapMutation();
-		}
+		first->tryMutate(d_mutationProbability);
 		
 		newPopulation->vSetValueAt(i_populationSize - 1, first);
 		delete second;
@@ -84,6 +82,7 @@ void COptimizer::vRunIteration()
 	// Swap the old population with the new one, so main population will be new and old array wont be deleted
 	m_population <<= newPopulation;
 	findBestIndividual();
+	ll_generation_count++;
 
 	// Delete newPopulation elements to prevent leaks
 	for (int j = 0; j < i_populationSize; j++) {
@@ -135,6 +134,7 @@ void COptimizer::findBestIndividual()
 		CIndividual* current = m_population->getValueAt(i);
 		if (!current->isUpdated()) {
 			current->setFitness(c_evaluator.dEvaluate(current->getGenotype()));
+			ll_evaluation_count++;
 			current->setUpdated(true);
 		}
 		if (current->getFitness() > d_current_best_fitness) {
@@ -153,6 +153,7 @@ bool COptimizer::b_findBestIndividual()
 		CIndividual* current = m_population->getValueAt(i);
 		if (!current->isUpdated()) {
 			current->setFitness(c_evaluator.dEvaluate(current->getGenotype()));
+			ll_evaluation_count++;
 			current->setUpdated(true);
 		}
 		if (current->getFitness() > d_current_best_fitness) {

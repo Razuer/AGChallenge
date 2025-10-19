@@ -52,13 +52,18 @@ mt19937& CIndividual::randomEngine() {
 	return engine;
 }
 
+void CIndividual::seedRandom(unsigned int s) {
+	static mt19937& engine = randomEngine();
+	engine.seed(s);
+}
+
 // Method for mutating the individual
 void CIndividual::tryMutate(const double& mutationProbability)
 {
 	uniform_real_distribution<double> dist(0.0, 1.0);
 	
 	bool mutated = false;
-	for (int i = 0; i < m_genotype.size(); i++) {
+	for (size_t i = 0; i < m_genotype.size(); i++) {
 		if (dist(randomEngine()) < mutationProbability) {
 			m_genotype[i] ^= 1;
 			mutated = true;
@@ -85,10 +90,10 @@ void CIndividual::swapMutation()
 // Method for crossing the individual with another one
 void CIndividual::crossover(CIndividual& other)
 {
-	uniform_int_distribution<int> dist(1, m_genotype.size() - 1);
+	uniform_int_distribution<int> dist(1, (int)m_genotype.size() - 1);
 	int crossoverPoint = dist(randomEngine());
 
-	for (int i = crossoverPoint; i < m_genotype.size(); i++) {
+	for (size_t i = (size_t)crossoverPoint; i < m_genotype.size(); i++) {
 		swap(m_genotype[i], other.m_genotype[i]);
 	}
 	m_updated = false;

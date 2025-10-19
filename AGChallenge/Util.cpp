@@ -40,7 +40,7 @@ float float_round(float value, int precision) {
 // Constructs the conversion tool for gray coded bits to floats
 // on a given range of numbers
 BinaryToFloat::BinaryToFloat(size_t _bits, float min, float max,
-                             int precision) {
+                             int /*precision*/) {
   bits = _bits;
   size_t length = 1 << bits;
   size_t gray;

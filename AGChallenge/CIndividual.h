@@ -42,4 +42,7 @@ public:
 	// Getters
 	const vector<int>& getGenotype() const { return m_genotype; }
 	vector<int>& getGenotype() { return m_genotype; }
+
+	// RNG control
+	static void seedRandom(unsigned int s);
 };

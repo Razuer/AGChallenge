@@ -42,7 +42,7 @@ class Evaluator {
 // Example problem of maximizing the number of 1s in the string.
 class OneMax : public Evaluator {
  public:
-  OneMax(Configuration& config, int run_number) {
+  OneMax(Configuration& /*config*/, int /*run_number*/) {
   }
   float evaluate(const vector<bool> & solution) override;
   create_evaluator(OneMax);
@@ -88,7 +88,7 @@ class DeceptiveStepTrap : public Evaluator {
 // except that traps are not scored linearly and are always of size 3.
 class Deceptive3 : public Evaluator {
  public:
-  Deceptive3(Configuration& config, int run_number)
+  Deceptive3(Configuration& config, int /*run_number*/)
       : precision(config.get<int>("precision")) {
   }
   float evaluate(const vector<bool> & solution) override;
@@ -105,7 +105,7 @@ class Deceptive3 : public Evaluator {
 // set to 1.
 class Bipolar : public Evaluator {
  public:
-  Bipolar(Configuration& config, int run_number)
+  Bipolar(Configuration& config, int /*run_number*/)
       : trap_size(config.get<int>("trap_size")),
         precision(config.get<int>("precision")) {
   }
@@ -123,7 +123,7 @@ private:
 // "Jump" from n-k bits set to n bits set.
 class JumpK : public Evaluator {
  public:
-  JumpK(Configuration& config, int run_number)
+  JumpK(Configuration& config, int /*run_number*/)
       : k(config.get<int>("k")),
         precision(config.get<int>("precision")) {
   }
@@ -171,7 +171,7 @@ class NearestNeighborNK : public Evaluator {
 // number of consecutive set bits at the start of the string.
 class LeadingOnes : public Evaluator {
  public:
-  LeadingOnes(Configuration& config, int run_number)
+  LeadingOnes(Configuration& config, int /*run_number*/)
       : precision(config.get<int>("precision")) {
   }
   float evaluate(const vector<bool> & solution) override;
@@ -185,7 +185,7 @@ class LeadingOnes : public Evaluator {
 // consecutively larger portions of of the string to all have the same value.
 class HIFF : public Evaluator {
  public:
-  HIFF(Configuration& config, int run_number)
+  HIFF(Configuration& config, int /*run_number*/)
       : precision(config.get<int>("precision")) {
   }
   float evaluate(const vector<bool> & solution) override;
@@ -257,7 +257,7 @@ class Rastrigin : public Evaluator {
 // then reads in the fitness value.
 class External : public Evaluator {
  public:
-  External(Configuration& config, int run_number)
+  External(Configuration& config, int /*run_number*/)
       : script_file(config.get<string>("script_path")),
         out_file(config.get<string>("external_out")),
         in_file(config.get<string>("external_in")) {

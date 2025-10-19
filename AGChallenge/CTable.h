@@ -155,8 +155,7 @@ CTable<T> CTable<T>::cCreateTab()
 template <typename T>
 void CTable<T>::v_copy(const CTable& cOther)
 {
-	if (tab != NULL) delete this;
-
+	if (tab != NULL) delete[] tab;
 	tab = new T[cOther.length];
 	length = cOther.length;
 	for (int ii = 0; ii < cOther.length; ii++)
@@ -166,7 +165,8 @@ void CTable<T>::v_copy(const CTable& cOther)
 template<typename T>
 CTable<T> CTable<T>::operator=(const CTable& cOther)
 {
-	if (tab != NULL) delete tab;
+	if (this == &cOther) return *this;
+	if (tab != NULL) delete[] tab;
 	v_copy(cOther);
 	if (DEBUG)cout << "op=\n";
 	return(*this);
@@ -219,7 +219,9 @@ void CTable<T>::vSetValueAt(int iOffset, T iNewVal) {
 
 template<typename T>
 T CTable<T>::getValueAt(int iOffset) {
-	if (iOffset < length && iOffset >= 0) return tab[iOffset];;
+	if (iOffset < length && iOffset >= 0) return tab[iOffset];
+	// out of range: return default value
+	return T{};
 }
 
 template<typename T>

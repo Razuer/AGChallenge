@@ -21,6 +21,7 @@ set(SOURCES
 	${SRC_DIR}/Timer.cpp
 	${SRC_DIR}/Util.cpp
 	${SRC_DIR}/CIndividual.cpp
+	${SRC_DIR}/Knapsack.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -38,12 +39,21 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # Define path to problem files for runtime
 set(PROBLEM_FILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/problem_files)
 target_compile_definitions(${PROJECT_NAME} PRIVATE P3_PROBLEM_FOLDER="${PROBLEM_FILES_DIR}/")
+set(KP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/instances_01_KP/)
+target_compile_definitions(${PROJECT_NAME} PRIVATE KP_INSTANCES_DIR="${KP_DIR}")
 
 # Optionally, copy problem files next to the binary for convenience
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/problem_files
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROBLEM_FILES_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>/problem_files
 	COMMENT "Copying problem files to runtime directory"
+)
+
+# Optionally copy knapsack instances as well
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/instances_01_KP
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${KP_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>/instances_01_KP
+	COMMENT "Copying knapsack instances to runtime directory"
 )
 
 # Option to build with default quick run
