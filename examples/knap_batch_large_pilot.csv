@@ -1,0 +1,8 @@
+instance=instances_01_KP/large_scale/knapPI_3_5000_1000_1
+optimum=instances_01_KP/large_scale-optimum/knapPI_3_5000_1000_1
+
+# Small pilot to validate pipeline quickly
+pop,pc,pm,seconds,runs,seed,evals
+400,0.90,0.0002,20,3,,
+400,0.95,0.0002,20,3,,
+800,0.90,0.0002,20,3,,

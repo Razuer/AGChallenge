@@ -1,6 +1,6 @@
 # AGChallenge
 
-CMake + Clang setup for building and running this Visual Studio 2022 project on Linux in VS Code.
+Genetic Algorithm written in C++.
 
 ## Build (VS Code)
 
@@ -34,6 +34,7 @@ General flags (defaults in parentheses):
 -   `--kp-instance <path>` — knapsack instance file path when `--problem knap` (default: instances_01_KP/low-dimensional/f1_l-d_kp_10_269)
 -   `--kp-opt <path>` — optional knapsack optimum value file (normalizes fitness) (default: none)
 -   `--csv <file>` — append results to CSV file (header written if file is new/empty) (default: off)
+-   `--batch <file>` — run batch mode: the file specifies instance/optimum paths and a list of configurations (see below)
 -   `--seed <u32>` — set RNG seed for reproducible runs (default: random)
 -   `--evals <N>` — evaluation budget; stop once this many fitness evaluations are performed (default: disabled)
 
@@ -104,6 +105,38 @@ Examples:
      --kp-opt instances_01_KP/large_scale-optimum/knapPI_2_200_1000_1 \
      --quick-seconds 20 --runs 5 --pop 200 --pc 0.9 --pm 0.005 --csv results.csv
 
-Notes:
+## Batch mode
 
--   The current GA uses tournament selection and does not include explicit elitism. If you need faster or more stable convergence, adding elitism 1–2 can help (can be implemented later without changing the CLI).
+To easily compare different parameter sets and save all results to a single CSV file, use the `--batch <file>` flag. The batch format supports two variants:
+
+Common instance/optimum at the top of the file:
+
+```
+# comments starting with '#'
+instance=instances_01_KP/large_scale/knapPI_2_200_1000_1
+optimum=instances_01_KP/large_scale-optimum/knapPI_2_200_1000_1
+
+pop,pc,pm,seconds,runs,seed,evals
+200,0.9,0.005,20,5,12345,
+200,0.9,0.010,20,5,12345,
+300,0.9,0.005,20,3,,
+```
+
+Instance/optimum per row (header must start with `instance,optimum,...`):
+
+```
+instance,optimum,pop,pc,pm,seconds,runs,seed,evals
+instances_01_KP/low-dimensional/f1_l-d_kp_10_269,instances_01_KP/low-dimensional-optimum/f1_l-d_kp_10_269,100,0.9,0.01,10,5,,
+instances_01_KP/large_scale/knapPI_2_200_1000_1,instances_01_KP/large_scale-optimum/knapPI_2_200_1000_1,200,0.9,0.005,20,5,42,
+```
+
+Notes:
+- Required columns: `pop,pc,pm,seconds`. Optional: `runs` (default: 1), `seed` (default: random), `evals` (evaluation budget; default: disabled).
+- If you do not pass `--csv`, results will be written to `<your_batch_file>.csv` (a header will be added if the file is new/empty).
+- Each configuration is executed `runs` times; each output row contains: `run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed`.
+
+Example batch run:
+
+```
+./build/bin/AGChallenge --batch examples/knap_batch.csv
+```
