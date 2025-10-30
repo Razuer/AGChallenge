@@ -1,0 +1,6 @@
+Implementacje algorytmu genetycznego opracowanego w ramach zadania 1 rozszerzyć o przynajmniej:
+- dwie metody selekcji (w tym może być selekcja elitarna)
+- inne metody krzyżowania/mutacji (minimum 2)
+- operator inwersji
+
+Następnie dokonać badania jakości zaimplementowanego algorytmu dla różnych metod selekcji, krzyżowania i mutacji.  Wskazać najlepszą konfigurację dla rozwiązywanego problemu. Na ocenę ma wpływ ilość zaimplementowanych modyfikacji (za wymienione w zadaniu można max dostać 5pkt) oraz wnioski wynikające z przeprowadzonych badań. Proszę przedstawić wyniki badań w czytelnej formie - tabelka, wykres itp.

@@ -1,9 +1,3 @@
 run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed
-1,knap,200,0.9,0.005,10,1,instances_01_KP/large_scale/knapPI_2_200_1000_1,4892,942727,12345
-2,knap,200,0.9,0.005,10,1,instances_01_KP/large_scale/knapPI_2_200_1000_1,4953,954458,12345
-3,knap,200,0.9,0.005,10,1,instances_01_KP/large_scale/knapPI_2_200_1000_1,4949,953691,12345
-4,knap,200,0.9,0.01,10,0.967495,instances_01_KP/large_scale/knapPI_2_200_1000_1,4844,956141,12345
-5,knap,200,0.9,0.01,10,0.967495,instances_01_KP/large_scale/knapPI_2_200_1000_1,4917,970544,12345
-6,knap,200,0.9,0.01,10,0.967495,instances_01_KP/large_scale/knapPI_2_200_1000_1,4926,972323,12345
-7,knap,300,0.9,0.005,10,1,instances_01_KP/large_scale/knapPI_2_200_1000_1,3244,938055,
-8,knap,300,0.9,0.005,10,1,instances_01_KP/large_scale/knapPI_2_200_1000_1,3280,947947,
+1,knap,50,0.8,0.01,5,1,instances_01_KP/large_scale/knapPI_1_100_1000_1,7316,339246,12345
+2,knap,50,0.8,0.01,5,1,instances_01_KP/large_scale/knapPI_1_100_1000_1,7356,340904,12345
