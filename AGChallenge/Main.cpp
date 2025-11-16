@@ -4,6 +4,8 @@
 #include "Knapsack.h"
 #include "CIndividual.h"
 
+#include <algorithm>
+#include <cctype>
 #include <exception>
 #include <iostream>
 #include <random>
@@ -32,6 +34,15 @@ static unsigned int g_seed = 0; // 0 means random seed
 static long long g_eval_budget = -1; // <=0 means disabled
 // Batch mode
 static string g_batch_path; // path to batch config file; when set, batch mode runs
+// Operator configuration (defaults replicate Zad1 behaviour)
+static COptimizer::SelectionMethod g_selection_method = COptimizer::SelectionMethod::Tournament;
+static COptimizer::CrossoverMethod g_crossover_method = COptimizer::CrossoverMethod::OnePoint;
+static COptimizer::MutationMethod g_mutation_method = COptimizer::MutationMethod::BitFlip;
+static int g_elite_count = 0;
+static double g_inversion_probability = 0.0;
+static double g_uniform_swap_probability = 0.5;
+
+static constexpr const char* CSV_HEADER = "run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed,selection,crossover,mutation,elitism,pinv,uniform_swap";
 
 static inline const char* problemToString(Problem p)
 {
@@ -44,6 +55,100 @@ static inline const char* problemToString(Problem p)
 	}
 }
 
+static string normalizeToken(string value)
+{
+	transform(value.begin(), value.end(), value.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+	value.erase(std::remove_if(value.begin(), value.end(), [](unsigned char c) { return c == '-' || c == '_' || std::isspace(c); }), value.end());
+	return value;
+}
+
+static bool parseSelectionMethod(const string &value, COptimizer::SelectionMethod &out)
+{
+	string token = normalizeToken(value);
+	if (token == "tournament") {
+		out = COptimizer::SelectionMethod::Tournament;
+		return true;
+	}
+	if (token == "random2" || token == "randomtwo") {
+		out = COptimizer::SelectionMethod::RandomTwo;
+		return true;
+	}
+	if (token == "roulette") {
+		out = COptimizer::SelectionMethod::Roulette;
+		return true;
+	}
+	return false;
+}
+
+static bool parseCrossoverMethod(const string &value, COptimizer::CrossoverMethod &out)
+{
+	string token = normalizeToken(value);
+	if (token == "onepoint" || token == "singlepoint") {
+		out = COptimizer::CrossoverMethod::OnePoint;
+		return true;
+	}
+	if (token == "twopoint" || token == "doublepoint") {
+		out = COptimizer::CrossoverMethod::TwoPoint;
+		return true;
+	}
+	if (token == "uniform") {
+		out = COptimizer::CrossoverMethod::Uniform;
+		return true;
+	}
+	return false;
+}
+
+static bool parseMutationMethod(const string &value, COptimizer::MutationMethod &out)
+{
+	string token = normalizeToken(value);
+	if (token == "bitflip" || token == "flip") {
+		out = COptimizer::MutationMethod::BitFlip;
+		return true;
+	}
+	if (token == "swap") {
+		out = COptimizer::MutationMethod::Swap;
+		return true;
+	}
+	if (token == "scramble") {
+		out = COptimizer::MutationMethod::Scramble;
+		return true;
+	}
+	return false;
+}
+
+static string selectionToString(COptimizer::SelectionMethod method)
+{
+	switch (method)
+	{
+	case COptimizer::SelectionMethod::RandomTwo: return "random-two";
+	case COptimizer::SelectionMethod::Roulette: return "roulette";
+	case COptimizer::SelectionMethod::Tournament:
+	default: return "tournament";
+	}
+}
+
+static string crossoverToString(COptimizer::CrossoverMethod method)
+{
+	switch (method)
+	{
+	case COptimizer::CrossoverMethod::TwoPoint: return "two-point";
+	case COptimizer::CrossoverMethod::Uniform: return "uniform";
+	case COptimizer::CrossoverMethod::OnePoint:
+	default: return "one-point";
+	}
+}
+
+static string mutationToString(COptimizer::MutationMethod method)
+{
+	switch (method)
+	{
+	case COptimizer::MutationMethod::Swap: return "swap";
+	case COptimizer::MutationMethod::Scramble: return "scramble";
+	case COptimizer::MutationMethod::BitFlip:
+	default: return "bit-flip";
+	}
+}
+
 // Runs the optimizer and returns final best fitness (NaN on error), also returning gens/evals
 double dRunExperimentReturnFitnessAndStats(CEvaluator &cConfiguredEvaluator, long long &out_gens, long long &out_evals)
 {
@@ -53,6 +158,12 @@ double dRunExperimentReturnFitnessAndStats(CEvaluator &cConfiguredEvaluator, lon
 		double d_time_passed;
 
 		COptimizer c_optimizer(cConfiguredEvaluator);
+		c_optimizer.setSelectionMethod(g_selection_method);
+		c_optimizer.setCrossoverMethod(g_crossover_method);
+		c_optimizer.setMutationMethod(g_mutation_method);
+		c_optimizer.setElitismCount(g_elite_count);
+		c_optimizer.setInversionProbability(g_inversion_probability);
+		c_optimizer.setUniformSwapProbability(g_uniform_swap_probability);
 		// Apply CLI overrides before initialization
 		if (g_pop > 0) c_optimizer.setPopulationSize(g_pop);
 		if (g_pc >= 0) c_optimizer.setCrossoverProbability(g_pc);
@@ -213,6 +324,45 @@ int main(int iArgCount, char **ppcArgValues)
 		{
 			try { g_pm = stod(ppcArgValues[++i]); } catch (...) {}
 		}
+		else if (arg == "--selection" && i + 1 < iArgCount)
+		{
+			string value = ppcArgValues[++i];
+			if (!parseSelectionMethod(value, g_selection_method))
+			{
+				cerr << "Unknown selection method: " << value << endl;
+				return 1;
+			}
+		}
+		else if (arg == "--crossover-method" && i + 1 < iArgCount)
+		{
+			string value = ppcArgValues[++i];
+			if (!parseCrossoverMethod(value, g_crossover_method))
+			{
+				cerr << "Unknown crossover method: " << value << endl;
+				return 1;
+			}
+		}
+		else if (arg == "--mutation-method" && i + 1 < iArgCount)
+		{
+			string value = ppcArgValues[++i];
+			if (!parseMutationMethod(value, g_mutation_method))
+			{
+				cerr << "Unknown mutation method: " << value << endl;
+				return 1;
+			}
+		}
+		else if (arg == "--elitism" && i + 1 < iArgCount)
+		{
+			try { g_elite_count = std::max(0, stoi(ppcArgValues[++i])); } catch (...) { g_elite_count = 0; }
+		}
+		else if (arg == "--pinv" && i + 1 < iArgCount)
+		{
+			try { g_inversion_probability = stod(ppcArgValues[++i]); } catch (...) { g_inversion_probability = 0.0; }
+		}
+		else if (arg == "--uniform-swap" && i + 1 < iArgCount)
+		{
+			try { g_uniform_swap_probability = stod(ppcArgValues[++i]); } catch (...) { g_uniform_swap_probability = 0.5; }
+		}
 		else if (arg == "--runs" && i + 1 < iArgCount)
 		{
 			try { g_runs = stoi(ppcArgValues[++i]); } catch (...) {}
@@ -280,7 +430,7 @@ int main(int iArgCount, char **ppcArgValues)
 			trim(ln);
 		}
 
-		// Extract key=value pairs for instance/optimum from top of file
+		// Extract key=value pairs for instance/optimum and optional defaults from top of file
 		size_t idx = 0;
 		for (; idx < lines.size(); ++idx)
 		{
@@ -292,6 +442,48 @@ int main(int iArgCount, char **ppcArgValues)
 			trim(key); trim(val);
 			if (key == "instance") instance_path = val;
 			else if (key == "optimum") optimum_path = val;
+			else if (key == "selection") {
+				if (!parseSelectionMethod(val, g_selection_method))
+				{
+					cerr << "Batch file: unknown selection method '" << val << "'" << endl;
+					return 1;
+				}
+			}
+			else if (key == "crossover" || key == "crossover-method") {
+				if (!parseCrossoverMethod(val, g_crossover_method))
+				{
+					cerr << "Batch file: unknown crossover method '" << val << "'" << endl;
+					return 1;
+				}
+			}
+			else if (key == "mutation" || key == "mutation-method") {
+				if (!parseMutationMethod(val, g_mutation_method))
+				{
+					cerr << "Batch file: unknown mutation method '" << val << "'" << endl;
+					return 1;
+				}
+			}
+			else if (key == "elitism") {
+				try { g_elite_count = std::max(0, stoi(val)); }
+				catch (...) {
+					cerr << "Batch file: invalid elitism value '" << val << "'" << endl;
+					return 1;
+				}
+			}
+			else if (key == "pinv") {
+				try { g_inversion_probability = std::clamp(stod(val), 0.0, 1.0); }
+				catch (...) {
+					cerr << "Batch file: invalid pinv value '" << val << "'" << endl;
+					return 1;
+				}
+			}
+			else if (key == "uniform_swap" || key == "uniform-swap") {
+				try { g_uniform_swap_probability = std::clamp(stod(val), 0.0, 1.0); }
+				catch (...) {
+					cerr << "Batch file: invalid uniform_swap value '" << val << "'" << endl;
+					return 1;
+				}
+			}
 			else break; // stop on unknown key
 		}
 
@@ -331,7 +523,7 @@ int main(int iArgCount, char **ppcArgValues)
 				}
 				if (should_write_header)
 				{
-					csv << "run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed" << '\n';
+					csv << CSV_HEADER << '\n';
 				}
 			}
 		}
@@ -341,11 +533,9 @@ int main(int iArgCount, char **ppcArgValues)
 		vector<string> header_cols = split_csv(header);
 		for (auto &h : header_cols) trim(h);
 		bool per_row_has_instance = false;
-		size_t col_offset = 0;
 		if (!header_cols.empty() && header_cols[0] == "instance")
 		{
 			per_row_has_instance = true;
-			col_offset = 2; // instance,optimum
 		}
 		else
 		{
@@ -371,6 +561,16 @@ int main(int iArgCount, char **ppcArgValues)
 		int idx_runs = get_col_index("runs");
 		int idx_seed = get_col_index("seed");
 		int idx_evals = get_col_index("evals"); // optional evaluation budget per config
+		int idx_selection = get_col_index("selection");
+		int idx_crossover = get_col_index("crossover-method");
+		if (idx_crossover < 0) idx_crossover = get_col_index("crossover");
+		int idx_mutation = get_col_index("mutation-method");
+		if (idx_mutation < 0) idx_mutation = get_col_index("mutation");
+		int idx_elitism = get_col_index("elitism");
+		int idx_pinv = get_col_index("pinv");
+		int idx_uniform = get_col_index("uniform-swap");
+		if (idx_uniform < 0) idx_uniform = get_col_index("uniform_swap");
+		if (idx_uniform < 0) idx_uniform = get_col_index("uniformswap");
 
 		// Validate required columns
 		if (idx_pop < 0 || idx_pc < 0 || idx_pm < 0 || idx_seconds < 0)
@@ -378,6 +578,14 @@ int main(int iArgCount, char **ppcArgValues)
 			cerr << "Batch header must contain at least: pop,pc,pm,seconds and optionally runs,seed,evals" << endl;
 			return 1;
 		}
+
+		// Defaults for optional GA settings per-row
+		COptimizer::SelectionMethod selection_default = g_selection_method;
+		COptimizer::CrossoverMethod crossover_default = g_crossover_method;
+		COptimizer::MutationMethod mutation_default = g_mutation_method;
+		int elitism_default = g_elite_count;
+		double pinv_default = g_inversion_probability;
+		double uniform_default = g_uniform_swap_probability;
 
 		// Iterate data rows
 		long long batch_run_counter = 0;
@@ -404,6 +612,54 @@ int main(int iArgCount, char **ppcArgValues)
 			// Set globals for this config
 			g_problem = Problem::KNAP;
 			g_pop = pop; g_pc = pc; g_pm = pm; g_time_limit_sec = seconds; g_runs = runs; g_seed = seed; g_eval_budget = evals_budget;
+			g_selection_method = selection_default;
+			g_crossover_method = crossover_default;
+			g_mutation_method = mutation_default;
+			g_elite_count = elitism_default;
+			g_inversion_probability = pinv_default;
+			g_uniform_swap_probability = uniform_default;
+
+			auto reportError = [&](const string &field, const string &value){
+				cerr << "Batch file (" << g_batch_path << "), line " << (rline + 1) << ": invalid " << field << " value '" << value << "'" << endl;
+				return 1;
+			};
+
+			if (idx_selection >= 0 && !cols[(size_t)idx_selection].empty())
+			{
+				if (!parseSelectionMethod(cols[(size_t)idx_selection], g_selection_method))
+				{
+					return reportError("selection", cols[(size_t)idx_selection]);
+				}
+			}
+			if (idx_crossover >= 0 && !cols[(size_t)idx_crossover].empty())
+			{
+				if (!parseCrossoverMethod(cols[(size_t)idx_crossover], g_crossover_method))
+				{
+					return reportError("crossover", cols[(size_t)idx_crossover]);
+				}
+			}
+			if (idx_mutation >= 0 && !cols[(size_t)idx_mutation].empty())
+			{
+				if (!parseMutationMethod(cols[(size_t)idx_mutation], g_mutation_method))
+				{
+					return reportError("mutation", cols[(size_t)idx_mutation]);
+				}
+			}
+			if (idx_elitism >= 0 && !cols[(size_t)idx_elitism].empty())
+			{
+				try { g_elite_count = std::max(0, stoi(cols[(size_t)idx_elitism])); }
+				catch (...) { return reportError("elitism", cols[(size_t)idx_elitism]); }
+			}
+			if (idx_pinv >= 0 && !cols[(size_t)idx_pinv].empty())
+			{
+				try { g_inversion_probability = std::clamp(stod(cols[(size_t)idx_pinv]), 0.0, 1.0); }
+				catch (...) { return reportError("pinv", cols[(size_t)idx_pinv]); }
+			}
+			if (idx_uniform >= 0 && !cols[(size_t)idx_uniform].empty())
+			{
+				try { g_uniform_swap_probability = std::clamp(stod(cols[(size_t)idx_uniform]), 0.0, 1.0); }
+				catch (...) { return reportError("uniform_swap", cols[(size_t)idx_uniform]); }
+			}
 
 			for (int rr = 0; rr < runs; ++rr)
 			{
@@ -428,7 +684,13 @@ int main(int iArgCount, char **ppcArgValues)
 						<< inst << ','
 						<< gens << ','
 						<< evals << ','
-						<< (g_seed ? to_string(g_seed) : string(""))
+						<< (g_seed ? to_string(g_seed) : string("")) << ','
+						<< selectionToString(g_selection_method) << ','
+						<< crossoverToString(g_crossover_method) << ','
+						<< mutationToString(g_mutation_method) << ','
+						<< g_elite_count << ','
+						<< g_inversion_probability << ','
+						<< g_uniform_swap_probability
 						<< '\n';
 				}
 			}
@@ -445,6 +707,8 @@ int main(int iArgCount, char **ppcArgValues)
 	{
 		if (g_time_limit_sec == 20 * 60) g_time_limit_sec = 10; // default quick time
 		if (g_pop < 0) g_pop = 100; // smaller population for quick tests
+		if (g_pc < 0) g_pc = 0.8;
+		if (g_pm < 0) g_pm = 0.2;
 
 		// Prepare CSV header if requested and file is new/empty
 		if (!g_csv_path.empty())
@@ -459,7 +723,7 @@ int main(int iArgCount, char **ppcArgValues)
 			std::ofstream csv(g_csv_path, ios::app);
 			if (csv && write_header)
 			{
-				csv << "run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed" << '\n';
+				csv << CSV_HEADER << '\n';
 			}
 		}
 
@@ -500,15 +764,21 @@ int main(int iArgCount, char **ppcArgValues)
 						{
 							csv << (r + 1) << ','
 							    << problemToString(g_problem) << ','
-							    << (g_pop >= 0 ? to_string(g_pop) : string("")) << ','
-							    << (g_pc >= 0 ? to_string(g_pc) : string("")) << ','
-							    << (g_pm >= 0 ? to_string(g_pm) : string("")) << ','
+							    << g_pop << ','
+							    << g_pc << ','
+							    << g_pm << ','
 							    << g_time_limit_sec << ','
 							    << fit << ','
 								<< g_kp_instance << ','
 								<< gens << ','
 								<< evals << ','
-								<< (g_seed ? to_string(g_seed) : string(""))
+								<< (g_seed ? to_string(g_seed) : string("")) << ','
+								<< selectionToString(g_selection_method) << ','
+								<< crossoverToString(g_crossover_method) << ','
+								<< mutationToString(g_mutation_method) << ','
+								<< g_elite_count << ','
+								<< g_inversion_probability << ','
+								<< g_uniform_swap_probability
 							    << '\n';
 						}
 					}

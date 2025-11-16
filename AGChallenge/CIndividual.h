@@ -34,10 +34,13 @@ public:
 	// Method for mutating the individual
 	void tryMutate(const double& mutationProbability);
 	void swapMutation();
+	void scrambleMutation();
+	void inversionMutation();
 
 	// Method for crossing the individual with another one and returning the children
 	void crossover(CIndividual& other);
 	void twoPointCrossover(CIndividual& other);
+	void uniformCrossover(CIndividual& other, double swapProbability = 0.5);
 
 	// Getters
 	const vector<int>& getGenotype() const { return m_genotype; }

@@ -1,5 +1,7 @@
 #include "CIndividual.h"
 
+#include <algorithm>
+
 	// Constructor
 CIndividual::CIndividual(const vector<int>& genotype)
 {
@@ -23,6 +25,7 @@ CIndividual::CIndividual(int genotype_size)
 CIndividual::CIndividual(const CIndividual& pcOther) {
 	m_genotype = pcOther.m_genotype;
 	m_fitness = pcOther.m_fitness;
+	m_updated = pcOther.m_updated;
 }
 
 CIndividual::CIndividual() {
@@ -86,6 +89,54 @@ void CIndividual::swapMutation()
 	m_fitness = UNKNOWN_FIT;
 }
 
+void CIndividual::scrambleMutation()
+{
+	if (m_genotype.size() < 2) {
+		return;
+	}
+
+	uniform_int_distribution<int> dist(0, static_cast<int>(m_genotype.size() - 1));
+	int start = dist(randomEngine());
+	int end = dist(randomEngine());
+
+	if (start > end) {
+		swap(start, end);
+	}
+	if (start == end) {
+		return;
+	}
+
+	vector<int> segment(m_genotype.begin() + start, m_genotype.begin() + end + 1);
+	std::shuffle(segment.begin(), segment.end(), randomEngine());
+	std::copy(segment.begin(), segment.end(), m_genotype.begin() + start);
+
+	m_updated = false;
+	m_fitness = UNKNOWN_FIT;
+}
+
+void CIndividual::inversionMutation()
+{
+	if (m_genotype.size() < 2) {
+		return;
+	}
+
+	uniform_int_distribution<int> dist(0, static_cast<int>(m_genotype.size() - 1));
+	int start = dist(randomEngine());
+	int end = dist(randomEngine());
+
+	if (start > end) {
+		swap(start, end);
+	}
+	if (start == end) {
+		return;
+	}
+
+	std::reverse(m_genotype.begin() + start, m_genotype.begin() + end + 1);
+
+	m_updated = false;
+	m_fitness = UNKNOWN_FIT;
+}
+
 
 // Method for crossing the individual with another one
 void CIndividual::crossover(CIndividual& other)
@@ -96,6 +147,23 @@ void CIndividual::crossover(CIndividual& other)
 	for (size_t i = (size_t)crossoverPoint; i < m_genotype.size(); i++) {
 		swap(m_genotype[i], other.m_genotype[i]);
 	}
+	m_updated = false;
+	m_fitness = UNKNOWN_FIT;
+	other.m_updated = false;
+	other.m_fitness = UNKNOWN_FIT;
+}
+
+void CIndividual::uniformCrossover(CIndividual& other, double swapProbability)
+{
+	uniform_real_distribution<double> dist(0.0, 1.0);
+
+	for (size_t i = 0; i < m_genotype.size(); i++)
+	{
+		if (dist(randomEngine()) < swapProbability) {
+			swap(m_genotype[i], other.m_genotype[i]);
+		}
+	}
+
 	m_updated = false;
 	m_fitness = UNKNOWN_FIT;
 	other.m_updated = false;

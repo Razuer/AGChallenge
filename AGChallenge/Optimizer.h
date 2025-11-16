@@ -6,6 +6,7 @@
 #include "CTable.h"
 #include "SmartPtr.h"
 
+#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -15,6 +16,27 @@ class COptimizer
 {
 public:
 	COptimizer(CEvaluator &cEvaluator);
+
+	enum class SelectionMethod
+	{
+		Tournament,
+		RandomTwo,
+		Roulette
+	};
+
+	enum class CrossoverMethod
+	{
+		OnePoint,
+		TwoPoint,
+		Uniform
+	};
+
+	enum class MutationMethod
+	{
+		BitFlip,
+		Swap,
+		Scramble
+	};
 
 	void vInitialize();
 	void vRunIteration();
@@ -26,6 +48,12 @@ public:
 	void setCrossoverProbability(double p) { d_crossoverProbability = p; }
 	void setMutationProbability(double p) { d_mutationProbability = p; }
 	void setSeed(unsigned int s) { c_rand_engine.seed(s); }
+	void setSelectionMethod(SelectionMethod method) { e_selection_method = method; }
+	void setCrossoverMethod(CrossoverMethod method) { e_crossover_method = method; }
+	void setMutationMethod(MutationMethod method) { e_mutation_method = method; }
+	void setElitismCount(int count) { i_elite_count = max(0, count); }
+	void setInversionProbability(double p) { d_inversionProbability = max(0.0, min(1.0, p)); }
+	void setUniformSwapProbability(double p) { d_uniform_swap_probability = max(0.0, min(1.0, p)); }
 
 	// Counters
 	long long getGenerationCount() const { return ll_generation_count; }
@@ -50,9 +78,23 @@ private:
 	int i_populationSize = 0;
 	double d_crossoverProbability = 0;
 	double d_mutationProbability = 0;
+	double d_inversionProbability = 0;
+	double d_uniform_swap_probability = 0.5;
+	int i_elite_count = 0;
+
+	SelectionMethod e_selection_method = SelectionMethod::Tournament;
+	CrossoverMethod e_crossover_method = CrossoverMethod::OnePoint;
+	MutationMethod e_mutation_method = MutationMethod::BitFlip;
 
 	CIndividual* randomTwoSelection();
 	CIndividual* tournamentSelection();
+	CIndividual* rouletteSelection();
+	CIndividual* selectParent();
+
+	void applyCrossover(CIndividual &first, CIndividual &second);
+	void applyMutation(CIndividual &individual);
+	void applyInversion(CIndividual &individual);
+	vector<CIndividual*> collectElites();
 
 	void findBestIndividual();
 	bool b_findBestIndividual();

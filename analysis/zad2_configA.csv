@@ -1,0 +1,6 @@
+run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed
+1,knap,200,0.900000,0.010000,2,0.89993,instances_01_KP/large_scale/knapPI_2_200_1000_1,297,58870,
+2,knap,200,0.900000,0.010000,2,0.905492,instances_01_KP/large_scale/knapPI_2_200_1000_1,306,60543,
+3,knap,200,0.900000,0.010000,2,0.905668,instances_01_KP/large_scale/knapPI_2_200_1000_1,306,60560,
+4,knap,200,0.900000,0.010000,2,0.907116,instances_01_KP/large_scale/knapPI_2_200_1000_1,303,59954,
+5,knap,200,0.900000,0.010000,2,0.929053,instances_01_KP/large_scale/knapPI_2_200_1000_1,308,60989,

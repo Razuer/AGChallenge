@@ -131,12 +131,29 @@ instances_01_KP/large_scale/knapPI_2_200_1000_1,instances_01_KP/large_scale-opti
 ```
 
 Notes:
-- Required columns: `pop,pc,pm,seconds`. Optional: `runs` (default: 1), `seed` (default: random), `evals` (evaluation budget; default: disabled).
-- If you do not pass `--csv`, results will be written next to the batch file as `<batch_stem>_results.csv`. This default results file is overwritten (truncated) at the start of each batch run and the header is always written. If you pass `--csv <path>`, results are appended to that path (header is written only if the file was empty).
-- Each configuration is executed `runs` times; each output row contains: `run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed`.
+
+-   Required columns: `pop,pc,pm,seconds`. Optional per-configuration overrides: `runs` (default: 1), `seed` (default: random), `evals` (evaluation budget), `selection`, `crossover`/`crossover-method`, `mutation`/`mutation-method`, `elitism`, `pinv`, `uniform_swap` (aliases with `-` are also accepted). Global defaults can be set at the top of the file via the same keys.
+-   If you do not pass `--csv`, results will be written next to the batch file as `<batch_stem>_results.csv`. This default results file is overwritten (truncated) at the start of each batch run and the header is always written. If you pass `--csv <path>`, results are appended to that path (header is written only if the file was empty).
+-   Each configuration is executed `runs` times; each output row contains: `run,problem,pop,pc,pm,seconds,fitness,instance,generations,evaluations,seed,selection,crossover,mutation,elitism,pinv,uniform_swap`.
 
 Example batch run:
 
 ```
 ./build/bin/AGChallenge --batch examples/knap_batch.csv
 ```
+
+For Zadanie 2 style sweeps, `examples/knap_batch_zad2.csv` demonstrates how to explore different operator combinations within a single batch file. After collecting results, `python analysis/summarize_batch.py <results.csv>` produces an aggregated CSV grouped (by default) over the operator columns, ready to paste into Excel or further process.
+
+## Assignment 2 — additional GA operators
+
+The implementation was extended to support choosing selection, crossover, mutation operators, and an inversion operator:
+
+-   `--selection` — `tournament` (default), `random-two` or `roulette`.
+-   `--crossover-method` — `one-point` (default), `two-point` or `uniform` (gene-swap probability controlled by `--uniform-swap`, default: 0.5).
+-   `--mutation-method` — `bit-flip` (default), `swap` (swap two genes) or `scramble` (shuffle a segment of the chromosome).
+-   `--elitism <k>` — number of top individuals copied unchanged to the next generation.
+-   `--pinv <p>` — probability of applying the inversion operator to an offspring (0 disables the operator).
+
+When running knapsack experiments, remember to always provide an optimum file for custom instances with `--kp-opt`; otherwise fitness will be normalized against the default instance.
+
+A sample comparison of configurations (different selection/operators) with parameters and mean results is described in `analysis/Zad2_results.md`. CSV files in `analysis/` (`zad2_config*.csv`) contain the raw data from five repeats for each configuration.
