@@ -144,6 +144,11 @@ Example batch run:
 
 For Zadanie 2 style sweeps, `examples/knap_batch_zad2.csv` demonstrates how to explore different operator combinations within a single batch file. After collecting results, `python analysis/summarize_batch.py <results.csv>` produces an aggregated CSV grouped (by default) over the operator columns, ready to paste into Excel or further process.
 
+For a more exhaustive operator grid (selection × crossover × mutation × elityzm/inwersja), see `examples/knap_batch_zad2_full.csv`. A typical workflow is:
+
+- Run the batch: `./build/bin/AGChallenge --batch examples/knap_batch_zad2_full.csv`
+- Summarize and plot: `python analysis/summarize_batch.py examples/knap_batch_zad2_full_results.csv --output examples/knap_batch_zad2_full_summary.csv --plots`
+
 ## Assignment 2 — additional GA operators
 
 The implementation was extended to support choosing selection, crossover, mutation operators, and an inversion operator:

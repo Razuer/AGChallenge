@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Quick summarizer for GA batch results.
+Quick summarizer for GA batch results, with optional plots.
 
-Usage:
-    python analysis/summarize_batch.py path/to/results.csv \
-        [--group-cols selection,crossover,mutation,elitism,pinv,uniform_swap,pop,pc,pm,seconds]
+Usage (summary to stdout):
+    python analysis/summarize_batch.py examples/knap_batch_zad2_results.csv
 
-The script prints a CSV summary grouped by the chosen columns, reporting:
+Usage (summary to file + plots):
+    python analysis/summarize_batch.py examples/knap_batch_zad2_results.csv \
+        --output examples/knap_batch_zad2_summary.csv --plots
+
+The script aggregates runs grouped by the chosen columns and reports:
 - count of runs
 - average fitness
 - best fitness
 - population standard deviation of fitness
 - average generations
 - average evaluations
+
+When `--plots` is enabled and matplotlib/seaborn are available, basic bar plots
+of average fitness by `selection`, `crossover` and `mutation` are saved as PNGs
+next to the input CSV.
 """
 
 import argparse
@@ -34,6 +41,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         help="Optional output CSV file. When omitted, the summary is printed to stdout.",
+    )
+    parser.add_argument(
+        "--plots",
+        action="store_true",
+        help="Generate simple PNG plots (avg_fitness vs selection/crossover/mutation).",
     )
     return parser.parse_args()
 
@@ -108,6 +120,39 @@ def main():
     writer.writerows(summary_rows)
     if args.output:
         target.close()
+
+    if args.plots and summary_rows:
+        try:
+            import pandas as pd
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+        except ImportError:
+            print("Plots requested but pandas/seaborn/matplotlib are not available.", file=sys.stderr)
+            return
+
+        df = pd.DataFrame(summary_rows)
+        # convert avg_fitness to float
+        if "avg_fitness" in df.columns:
+            df["avg_fitness_float"] = pd.to_numeric(df["avg_fitness"], errors="coerce")
+        else:
+            df["avg_fitness_float"] = float("nan")
+
+        base = args.csv_path.rsplit(".", 1)[0]
+
+        for col in ("selection", "crossover", "mutation"):
+            if col in df.columns and df[col].nunique(dropna=True) > 1:
+                sub = df.dropna(subset=["avg_fitness_float"])
+                if sub.empty:
+                    continue
+                plt.figure(figsize=(6, 4))
+                order = sorted(sub[col].dropna().unique())
+                sns.barplot(data=sub, x=col, y="avg_fitness_float", order=order, estimator="mean", ci=None)
+                plt.ylabel("Average fitness (per configuration)")
+                plt.xlabel(col.capitalize())
+                plt.tight_layout()
+                out_path = f"{base}_by_{col}.png"
+                plt.savefig(out_path)
+                plt.close()
 
 
 if __name__ == "__main__":

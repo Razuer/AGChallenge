@@ -1,0 +1,39 @@
+# Batch sweep for Zadanie 2 operators on knapPI_2_200_1000_1
+# Each configuration is run 5 times for 2 seconds.
+instance=instances_01_KP/large_scale/knapPI_2_200_1000_1
+optimum=instances_01_KP/large_scale-optimum/knapPI_2_200_1000_1
+
+# Base grid: pop,pc,pm,seconds,selection,crossover,mutation,elitism,pinv,uniform_swap,runs,seed
+pop,pc,pm,seconds,selection,crossover,mutation,elitism,pinv,uniform_swap,runs,seed
+
+# 1) Selection comparison (same crossover / mutation / elitism)
+200,0.9,0.01,2,tournament,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.01,2,random-two,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.01,2,roulette,two-point,bit-flip,4,0,0.5,5,
+
+# 2) Crossover comparison without elitism
+200,0.9,0.01,2,tournament,one-point,bit-flip,0,0,0.5,5,
+200,0.9,0.01,2,tournament,two-point,bit-flip,0,0,0.5,5,
+200,0.9,0.01,2,tournament,uniform,bit-flip,0,0,0.5,5,
+
+# 3) Crossover comparison with elitism
+200,0.9,0.01,2,tournament,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.01,2,tournament,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.01,2,tournament,uniform,bit-flip,4,0,0.5,5,
+
+# 4) Mutation type comparison (moderate pm)
+200,0.9,0.01,2,tournament,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,tournament,two-point,swap,4,0,0.5,5,
+200,0.9,0.10,2,tournament,two-point,swap,4,0,0.5,5,
+200,0.9,0.10,2,tournament,two-point,scramble,4,0,0.5,5,
+200,0.9,0.20,2,tournament,two-point,scramble,4,0,0.5,5,
+
+# 5) Scramble + inversion variants (exploration-focused)
+200,0.9,0.10,2,random-two,two-point,scramble,2,0.05,0.4,5,
+200,0.9,0.20,2,random-two,two-point,scramble,2,0.05,0.4,5,
+200,0.9,0.10,2,roulette,uniform,scramble,2,0.05,0.5,5,
+
+# 6) High-mutation stress tests (for comparison)
+200,0.9,0.20,2,tournament,one-point,bit-flip,0,0,0.5,5,
+200,0.9,0.20,2,tournament,two-point,bit-flip,0,0,0.5,5,
+200,0.9,0.20,2,roulette,uniform,swap,0,0,0.5,5,
