@@ -11,6 +11,11 @@ pop,pc,pm,seconds,selection,crossover,mutation,elitism,pinv,uniform_swap,runs,se
 200,0.9,0.01,2,random-two,two-point,bit-flip,4,0,0.5,5,
 200,0.9,0.01,2,roulette,two-point,bit-flip,4,0,0.5,5,
 
+# 1b) Selection comparison without elitism (same crossover/mutation)
+200,0.9,0.01,2,tournament,two-point,bit-flip,0,0,0.5,5,
+200,0.9,0.01,2,random-two,two-point,bit-flip,0,0,0.5,5,
+200,0.9,0.01,2,roulette,two-point,bit-flip,0,0,0.5,5,
+
 # 2) Crossover comparison without elitism
 200,0.9,0.01,2,tournament,one-point,bit-flip,0,0,0.5,5,
 200,0.9,0.01,2,tournament,two-point,bit-flip,0,0,0.5,5,
@@ -21,6 +26,12 @@ pop,pc,pm,seconds,selection,crossover,mutation,elitism,pinv,uniform_swap,runs,se
 200,0.9,0.01,2,tournament,two-point,bit-flip,4,0,0.5,5,
 200,0.9,0.01,2,tournament,uniform,bit-flip,4,0,0.5,5,
 
+# 3b) Full selection × crossover grid with elitism (pm=0.01, bit-flip)
+200,0.9,0.01,2,random-two,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.01,2,random-two,uniform,bit-flip,4,0,0.5,5,
+200,0.9,0.01,2,roulette,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.01,2,roulette,uniform,bit-flip,4,0,0.5,5,
+
 # 4) Mutation type comparison (moderate pm)
 200,0.9,0.01,2,tournament,two-point,bit-flip,4,0,0.5,5,
 200,0.9,0.05,2,tournament,two-point,swap,4,0,0.5,5,
@@ -28,10 +39,55 @@ pop,pc,pm,seconds,selection,crossover,mutation,elitism,pinv,uniform_swap,runs,se
 200,0.9,0.10,2,tournament,two-point,scramble,4,0,0.5,5,
 200,0.9,0.20,2,tournament,two-point,scramble,4,0,0.5,5,
 
+# 4b) Fill missing mutation × pm combinations (swap/scramble/bit-flip)
+200,0.9,0.01,2,tournament,two-point,swap,4,0,0.5,5,
+200,0.9,0.01,2,tournament,two-point,scramble,4,0,0.5,5,
+200,0.9,0.05,2,tournament,two-point,scramble,4,0,0.5,5,
+200,0.9,0.05,2,tournament,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,tournament,two-point,bit-flip,4,0,0.5,5,
+
+# 4c) selection × crossover grid for pm=0.05 (bit-flip, elitism=4)
+200,0.9,0.05,2,tournament,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,tournament,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,tournament,uniform,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,random-two,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,random-two,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,random-two,uniform,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,roulette,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,roulette,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.05,2,roulette,uniform,bit-flip,4,0,0.5,5,
+
+# 4d) selection × crossover grid for pm=0.10 (bit-flip, elitism=4)
+200,0.9,0.10,2,tournament,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,tournament,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,tournament,uniform,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,random-two,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,random-two,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,random-two,uniform,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,roulette,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,roulette,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.10,2,roulette,uniform,bit-flip,4,0,0.5,5,
+
+# 4e) selection × crossover grid for pm=0.20 (bit-flip, elitism=4)
+200,0.9,0.20,2,tournament,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,tournament,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,tournament,uniform,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,random-two,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,random-two,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,random-two,uniform,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,roulette,one-point,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,roulette,two-point,bit-flip,4,0,0.5,5,
+200,0.9,0.20,2,roulette,uniform,bit-flip,4,0,0.5,5,
+
 # 5) Scramble + inversion variants (exploration-focused)
 200,0.9,0.10,2,random-two,two-point,scramble,2,0.05,0.4,5,
 200,0.9,0.20,2,random-two,two-point,scramble,2,0.05,0.4,5,
 200,0.9,0.10,2,roulette,uniform,scramble,2,0.05,0.5,5,
+
+# 5b) Baselines for inversion study (same configs, pinv=0)
+200,0.9,0.10,2,random-two,two-point,scramble,2,0,0.4,5,
+200,0.9,0.20,2,random-two,two-point,scramble,2,0,0.4,5,
+200,0.9,0.10,2,roulette,uniform,scramble,2,0,0.5,5,
 
 # 6) High-mutation stress tests (for comparison)
 200,0.9,0.20,2,tournament,one-point,bit-flip,0,0,0.5,5,

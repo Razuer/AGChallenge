@@ -30,3 +30,29 @@ Do zbiorczego podsumowania dowolnego pliku wynikowego możesz użyć skryptu `an
 ```bash
 python analysis/summarize_batch.py analysis/zad2_configB.csv
 ```
+
+## Krótkie podsumowanie zadania 2
+
+**Nowe elementy algorytmu**
+- Selekcje:
+  - *Tournament* – losujemy 4 osobniki, wybieramy najlepszego; daje silną presję selekcji.
+  - *Random-two* – losujemy 2 osobniki, wybieramy lepszego; słabsza, ale tańsza selekcja.
+  - *Roulette* – prawdopodobieństwo wyboru jest proporcjonalne do fitness (z przesunięciem, by wagi były nieujemne).
+  - *Elityzm* – w każdej generacji kopiujemy bez zmian `k` najlepszych osobników (w eksperymentach najczęściej `k = 4`), niezależnie od typu selekcji.
+- Krzyżowania:
+  - *One-point* – klasyczne, wymiana ogona chromosomu za jednym punktem.
+  - *Two-point* – wymiana fragmentu między dwoma punktami.
+  - *Uniform* – dla każdego genu z prawdopodobieństwem ok. 0.5 zamieniamy bity rodziców (parametr `uniform_swap`).
+- Mutacje:
+  - *Bit-flip* – każdy bit odwracany z prawdopodobieństwem `pm` (np. 0.01).
+  - *Swap* – zamiana dwóch losowych pozycji w chromosomie.
+  - *Scramble* – losowy fragment chromosomu jest tasowany (permutacja).
+- Inwersja:
+  - Losowane są dwa indeksy, a fragment między nimi jest odwracany; operator stosowany z prawdopodobieństwem `pinv` (np. 0.05) po mutacji, zwiększa eksplorację przy scramble.
+
+**Skrócona analiza wyników (knapPI_2_200_1000_1)**
+- Najlepsza konfiguracja jakość/koszt: selekcja *tournament* + crossover *uniform* lub *two-point* + mutacja *bit-flip*, `pm ≈ 0.01`, elityzm `4`, `pinv = 0` – średni fitness ≈ 1.0, praktycznie zawsze osiągane optimum przy umiarkowanej liczbie ewaluacji (~6·10⁴).
+- Elityzm wyraźnie podnosi fitness (np. dla tournament two-point `pm = 0.01` przejście z elityzmu 0→4 podnosi średni fitness z ok. 0.94 do ≈1.0).
+- Typ selekcji: *tournament* jest najstabilniejszy i daje najwyższe wyniki; *random-two* jest poprawny, ale słabszy; *roulette* zwykle kończy w okolicy 0.65–0.7, nawet z elityzmem.
+- Typ mutacji i `pm`: *bit-flip* przy małym `pm` (ok. 0.01) jest najlepszy; zwiększanie `pm` do 0.1–0.2 obniża fitness. *Swap* i *scramble* mogą dojść do optimum, ale wymagają zdecydowanie większej liczby ewaluacji (rzędu 10⁶).
+- Inwersja (`pinv`) dla scramble poprawia eksplorację i może podnieść wynik, ale jeszcze bardziej zwiększa koszt obliczeniowy, więc nie jest najlepsza przy ograniczonym budżecie czasowym.

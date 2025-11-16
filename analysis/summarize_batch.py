@@ -131,14 +131,14 @@ def main():
             return
 
         df = pd.DataFrame(summary_rows)
-        # convert avg_fitness to float
-        if "avg_fitness" in df.columns:
-            df["avg_fitness_float"] = pd.to_numeric(df["avg_fitness"], errors="coerce")
-        else:
-            df["avg_fitness_float"] = float("nan")
+        # numeric helpers
+        df["avg_fitness_float"] = pd.to_numeric(df.get("avg_fitness", None), errors="coerce")
+        df["avg_evaluations_float"] = pd.to_numeric(df.get("avg_evaluations", None), errors="coerce")
+        df["pm_float"] = pd.to_numeric(df.get("pm", None), errors="coerce")
 
         base = args.csv_path.rsplit(".", 1)[0]
 
+        # 1) Barplots: average fitness by single categorical dimension
         for col in ("selection", "crossover", "mutation"):
             if col in df.columns and df[col].nunique(dropna=True) > 1:
                 sub = df.dropna(subset=["avg_fitness_float"])
@@ -153,6 +153,119 @@ def main():
                 out_path = f"{base}_by_{col}.png"
                 plt.savefig(out_path)
                 plt.close()
+
+        # 2) Heatmap: selection x crossover for each pm (multi-dimensional),
+        # filtered to a canonical GA setting to make cells comparable.
+        # Here: mutation=bit-flip, elitism=4, pinv=0.
+        if {"selection", "crossover", "pm_float", "mutation", "elitism", "pinv"}.issubset(df.columns):
+            sub = df[
+                (df["mutation"] == "bit-flip")
+                & (df["elitism"] == "4")
+                & (df["pinv"] == "0")
+            ].dropna(subset=["avg_fitness_float", "pm_float"])
+            if not sub.empty:
+                for pm_value, df_pm in sub.groupby("pm_float"):
+                    pivot = df_pm.pivot_table(
+                        index="selection",
+                        columns="crossover",
+                        values="avg_fitness_float",
+                        aggfunc="mean",
+                    )
+                    if pivot.empty:
+                        continue
+                    plt.figure(figsize=(6, 4))
+                    sns.heatmap(pivot, annot=True, fmt=".3f", cmap="viridis")
+                    plt.title(f"Avg fitness by selection × crossover (pm={pm_value})")
+                    plt.ylabel("Selection")
+                    plt.xlabel("Crossover")
+                    plt.tight_layout()
+                    out_path = f"{base}_heatmap_selection_crossover_pm{pm_value}.png"
+                    plt.savefig(out_path)
+                    plt.close()
+
+        # 3) Heatmap: mutation x pm (averaged over other choices)
+        if {"mutation", "pm_float"}.issubset(df.columns):
+            sub = df.dropna(subset=["avg_fitness_float", "pm_float"])
+            if not sub.empty and sub["mutation"].nunique(dropna=True) > 1:
+                pivot = sub.pivot_table(
+                    index="mutation",
+                    columns="pm_float",
+                    values="avg_fitness_float",
+                    aggfunc="mean",
+                )
+                if not pivot.empty:
+                    plt.figure(figsize=(6, 4))
+                    sns.heatmap(pivot, annot=True, fmt=".3f", cmap="magma")
+                    plt.title("Avg fitness by mutation × pm")
+                    plt.ylabel("Mutation")
+                    plt.xlabel("pm")
+                    plt.tight_layout()
+                    out_path = f"{base}_heatmap_mutation_pm.png"
+                    plt.savefig(out_path)
+                    plt.close()
+
+        # 4) Scatter: avg_evaluations vs avg_fitness, colored by mutation, styled by selection
+        if "avg_evaluations_float" in df.columns:
+            sub = df.dropna(subset=["avg_fitness_float", "avg_evaluations_float"])
+            if not sub.empty:
+                plt.figure(figsize=(6, 4))
+                sns.scatterplot(
+                    data=sub,
+                    x="avg_evaluations_float",
+                    y="avg_fitness_float",
+                    hue="mutation" if "mutation" in sub.columns else None,
+                    style="selection" if "selection" in sub.columns else None,
+                    s=80,
+                )
+                plt.xlabel("Average evaluations")
+                plt.ylabel("Average fitness")
+                plt.tight_layout()
+                out_path = f"{base}_scatter_evals_vs_fitness.png"
+                plt.savefig(out_path)
+                plt.close()
+
+        # 5) Elitism effect: barplot for pm=0.01, mutation=bit-flip
+        if {"selection", "elitism", "pm_float", "mutation"}.issubset(df.columns):
+            sub = df[(df["mutation"] == "bit-flip") & (df["pm_float"] == 0.01)]
+            sub = sub.dropna(subset=["avg_fitness_float"])
+            if not sub.empty and sub["elitism"].nunique(dropna=True) > 1:
+                plt.figure(figsize=(6, 4))
+                sns.barplot(
+                    data=sub,
+                    x="selection",
+                    y="avg_fitness_float",
+                    hue="elitism",
+                    estimator="mean",
+                    ci=None,
+                )
+                plt.ylabel("Average fitness (pm=0.01, bit-flip)")
+                plt.xlabel("Selection")
+                plt.tight_layout()
+                out_path = f"{base}_elitism_by_selection_pm0.01_bitflip.png"
+                plt.savefig(out_path)
+                plt.close()
+
+        # 6) Inversion effect: heatmap for mutation=scramble (pinv × pm)
+        if {"mutation", "pinv", "pm_float"}.issubset(df.columns):
+            sub = df[df["mutation"] == "scramble"]
+            sub = sub.dropna(subset=["avg_fitness_float", "pm_float"])
+            if not sub.empty and sub["pinv"].nunique(dropna=True) > 1:
+                pivot = sub.pivot_table(
+                    index="pinv",
+                    columns="pm_float",
+                    values="avg_fitness_float",
+                    aggfunc="mean",
+                )
+                if not pivot.empty:
+                    plt.figure(figsize=(6, 4))
+                    sns.heatmap(pivot, annot=True, fmt=".3f", cmap="coolwarm")
+                    plt.title("Avg fitness for scramble by pinv × pm")
+                    plt.ylabel("pinv")
+                    plt.xlabel("pm")
+                    plt.tight_layout()
+                    out_path = f"{base}_heatmap_scramble_pinv_pm.png"
+                    plt.savefig(out_path)
+                    plt.close()
 
 
 if __name__ == "__main__":
